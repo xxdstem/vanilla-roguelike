@@ -13,9 +13,14 @@ class Game {
         this.enemies = [];
         this.width = 40;
         this.height = 24;
+        this.bindKeys();
     }
 
     init() {
+        // если рестарт, обнулем
+        this.rooms = [];
+        this.enemies = [];
+
         this.generateMap();
         this.generateRooms();
         this.generateWays();
@@ -23,7 +28,6 @@ class Game {
         this.spawnEnemies();
         this.spawnHero();
         this.render();
-        this.bindKeys();
     }
 
     render(){
@@ -62,6 +66,14 @@ class Game {
         }
         renderHero();
         renderEnemies();
+        if (this.hero.hp <= 0) {
+            alert("Герой погиб!");
+            this.init();
+        }
+        if(this.enemies.length == 0){
+            alert("ты победил!")
+            this.init()
+        }
     }
 
     generateMap() {
@@ -288,6 +300,7 @@ class Game {
                 ) {
                     this.hero.x = newX;
                     this.hero.y = newY;
+                    this.moveEnemies();
                     this.render();
                 }
             }
@@ -321,8 +334,8 @@ class Game {
         let heroX = this.hero.x;
         let heroY = this.hero.y;
         this.enemies.forEach(enemy => {
-            if (Math.abs(enemy.x - heroX) <= 1 && Math.abs(enemy.y - heroY) <= 1
-                && !(enemy.x === heroX && enemy.y === heroY))
+            if ((enemy.x === heroX && Math.abs(enemy.y - heroY) === 1) ||
+                (enemy.y === heroY && Math.abs(enemy.x - heroX) === 1))
             {
                 enemy.hp -= this.hero.damage;
             }
@@ -332,6 +345,51 @@ class Game {
         this.render();
     }
 
+    getNextSpotToHero(y, x){
+        // принимаем координаты текущего enemy
+        // и получаем координаты следующего хода в сторону к герою
+        const hero = this.hero;
+        const directions = [
+            [0, 1],   // вниз
+            [0, -1],  // вверх
+            [1, 0],   // вправо
+            [-1, 0],  // влево
+        ];
+        let minDist = Math.abs(hero.y - y) + Math.abs(hero.x - x);
+        let nextMove = [y, x];
+
+        for (let [dy, dx] of directions) {
+            let ny = y + dy;
+            let nx = x + dx;
+            if (
+                ny >= 0 && ny < this.height &&
+                nx >= 0 && nx < this.width &&
+                (this.map[ny][nx] !== WALL) &&
+                !this.enemies.some(e => e.y === ny && e.x === nx) &&
+                !(hero.y === ny && hero.x === nx)
+            ) {
+                let dist = Math.abs(hero.y - ny) + Math.abs(hero.x - nx);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nextMove = [ny, nx];
+                }
+            }
+        }
+        return nextMove;
+    }
+
+    moveEnemies(){
+        this.enemies.forEach(enemy => {
+            const [y, x] = this.getNextSpotToHero(enemy.y, enemy.x);
+            // Сначала перемещаем врага
+            enemy.y = y;
+            enemy.x = x;
+            // После перемещения проверяем, соседствует ли враг с героем
+            if (Math.abs(enemy.x - this.hero.x) + Math.abs(enemy.y - this.hero.y) === 1) {
+                this.hero.hp -= 10;
+            }
+        });
+    }
     getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
@@ -348,7 +406,7 @@ class Hero {
         this.x = x;
         this.y = y;
         this.direction = 'left';
-        this.hp = 50;
+        this.hp = 100;
         this.damage = 10;
         this.inventory = [];
 
