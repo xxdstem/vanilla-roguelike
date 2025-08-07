@@ -3,10 +3,12 @@ const EMPTY = '';
 const ENEMY = 'tileE';
 const HEAL = 'tileHP';
 const SWORD = 'tileSW';
+const HERO = 'tileP'
 
 class Game {
     constructor() {
         this.map = [];
+        this.hero = null;
         this.rooms = [];
         this.enemies = [];
         this.width = 40;
@@ -18,10 +20,13 @@ class Game {
         this.generateRooms();
         this.generateWays();
         this.generateItems();
+        this.spawnEnemies();
+        this.spawnHero();
         this.render()
     }
 
     render(){
+        $(".field").empty();
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
                 let cell = this.map[y][x];
@@ -32,6 +37,30 @@ class Game {
                     class="tile ${cell}"></div>`);
             }
         }
+        let renderHero = ()=>{
+            let top = this.hero.y * 50;
+            let left = this.hero.x * 50;
+            let hp = this.hero.hp;
+            let direction = this.hero.direction;
+            $(".field").append(`<div
+                style="top: ${top}px; left: ${left}px; ${direction == 'left' ? 'transform: rotateY(190deg);' : ''}"
+                class="tile ${HERO}">
+                    <div style="width: ${hp}%" class="health">
+                </div>
+            </div>`);
+        }
+        let renderEnemies = ()=>{
+            this.enemies.forEach((enemy)=>{
+                let top = enemy.y * 50;
+                let left = enemy.x * 50;
+                let hp = enemy.hp;
+                $(".field").append(`<div
+                        style="top: ${top}px; left: ${left}px;"
+                        class="tile ${ENEMY}"><div style="width: ${hp}%" class="health"></div></div>`);
+            })
+        }
+        renderHero();
+        renderEnemies();
     }
 
     generateMap() {
@@ -182,17 +211,8 @@ class Game {
         const swordCount = 2;
         
         let generateItem = (item) =>{
-            let found;
-            let randX, randY;
-            while(!found){
-                randX = this.getRandomInt(1, this.width - 1);
-                randY = this.getRandomInt(1, this.height - 1);
-                if(this.map[randY][randX] == EMPTY){
-                    found = true
-                    break
-                }
-            }
-            this.map[randY][randX] = item;
+            let [y, x] = this.getRandomFreeSpot()
+            this.map[y][x] = item;
         }
 
         for (let i = 0; i < heatlhCount; i++){
@@ -203,11 +223,57 @@ class Game {
         }
     }
 
+    spawnEnemies(){
+        const enemiesCount = 10;
+        for(let e = 0; e < enemiesCount; e++){
+            let [y, x] = this.getRandomFreeSpot();
+            this.enemies.push(new Enemy(y, x))
+            this.map[y][x] = ENEMY;
+        }
+        
+    }
+
+    spawnHero(){
+        let [y, x] = this.getRandomFreeSpot();
+        this.hero = new Hero(y, x);
+    }
+
+    getRandomFreeSpot(){
+        let found;
+        let randX, randY;
+        while(!found){
+            randX = this.getRandomInt(1, this.width - 1);
+            randY = this.getRandomInt(1, this.height - 1);
+            if(this.map[randY][randX] == EMPTY){
+                found = true
+                break
+            }
+        }
+        return [randY, randX];
+    }
+
     getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 }
+class Enemy {
+    constructor(y, x) {
+        this.x = x;
+        this.y = y;
+        this.hp = Math.floor(Math.random() * (100 - 10 + 1) + 10);
+    }
+}
+class Hero {
+    constructor(y, x){
+        this.x = x;
+        this.y = y;
+        this.direction = 'left';
+        this.hp = 100;
+        this.damage = 0;
+        this.inventory = [];
 
+    }
+}
 class Room {
     constructor(x, y, size){
         this.x = x;
