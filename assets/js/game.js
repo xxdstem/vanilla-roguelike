@@ -32,7 +32,7 @@ class Game {
             for (let x = 0; x < this.width; x++) {
                 let cell = this.map[y][x];
                 let top = y * 50;
-                let left = x * 50;  
+                let left = x * 50; 
                 $(".field").append(`<div
                     style="top: ${top}px; left: ${left}px;"
                     class="tile ${cell}"></div>`);
@@ -229,7 +229,6 @@ class Game {
         for(let e = 0; e < enemiesCount; e++){
             let [y, x] = this.getRandomFreeSpot(2);
             this.enemies.push(new Enemy(y, x))
-            this.map[y][x] = ENEMY;
         }
         
     }
@@ -251,7 +250,7 @@ class Game {
                         if (
                             ny < 0 || ny >= this.height ||
                             nx < 0 || nx >= this.width ||
-                            (this.map[ny][nx] !== EMPTY && this.map[ny][nx] !== WALL)
+                            (this.enemies.some((enemy)=>enemy.y == ny && enemy.x == nx) || this.map[ny][nx] !== EMPTY && this.map[ny][nx] !== WALL)
                         ) {
                             isFree = false;
                         }
@@ -285,8 +284,7 @@ class Game {
                 let cell = this.map[newY][newX]
                 if (newX >= 0 && newX < this.width &&
                     newY >= 0 && newY < this.height &&
-                    (cell === EMPTY 
-                        || this.handleItemPickup(newY, newX, cell))
+                    this.handleItemPickup(newY, newX, cell)
                 ) {
                     this.hero.x = newX;
                     this.hero.y = newY;
@@ -297,7 +295,13 @@ class Game {
     }
 
     handleItemPickup(y, x, item){
+        // если враг на клетке
+        if(this.enemies.some((enemy)=>enemy.y == y && enemy.x == x)){
+            return false;
+        }
         switch (item) {
+            case EMPTY:
+                return true;
             case HEAL:
                 if(this.hero.hp < 100){
                     this.map[y][x] = EMPTY;
@@ -305,7 +309,7 @@ class Game {
                 }
                 return true
             case SWORD:
-                this.hero.damage = 50
+                this.hero.damage += 20
                 this.map[y][x] = EMPTY;
                 return true;
             default:
@@ -314,7 +318,18 @@ class Game {
     }
 
     handleAttack(){
-        //todo
+        let heroX = this.hero.x;
+        let heroY = this.hero.y;
+        this.enemies.forEach(enemy => {
+            if (Math.abs(enemy.x - heroX) <= 1 && Math.abs(enemy.y - heroY) <= 1
+                && !(enemy.x === heroX && enemy.y === heroY))
+            {
+                enemy.hp -= this.hero.damage;
+            }
+        });
+        // удаляем убитых врагов
+        this.enemies = this.enemies.filter(enemy => enemy.hp > 0);
+        this.render();
     }
 
     getRandomInt(min, max) {
