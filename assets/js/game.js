@@ -1,6 +1,8 @@
 const WALL = 'tileW';
 const EMPTY = '';
-const ENEMY = 'tile-E';
+const ENEMY = 'tileE';
+const HEAL = 'tileHP';
+const SWORD = 'tileSW';
 class Game {
     constructor() {
         this.map = [];
@@ -13,6 +15,8 @@ class Game {
     init() {
         this.generateMap();
         this.generateRooms();
+        this.generateWays();
+        this.generateItems();
         this.render()
     }
 
@@ -39,6 +43,7 @@ class Game {
     }
 
     generateRooms(){
+        //TODO: сделать чтоб комнаты генерировались на полях
         const maxAttempts = 100;
         for(let i = 0; i < this.numRooms; i++){
             let roomSize = this.getRandomInt(3, 8)
@@ -69,6 +74,50 @@ class Game {
                     }
                 }
             }
+        }
+    }
+
+    generateWays(){
+        let xWays = this.getRandomInt(3, 5);
+        let yWays = this.getRandomInt(3, 5);
+        
+        for(let i = 0; i < xWays; i++){
+            let randX = this.getRandomInt(1, this.width - 1);
+            for (let y = 0; y < this.height; y++) {
+                this.map[y][randX] = EMPTY;
+            }
+        }
+        for(let i = 0; i < yWays; i++){
+            let randY = this.getRandomInt(1, this.height - 1);
+            for (let x = 0; x < this.width; x++) {
+                this.map[randY][x] = EMPTY;
+            }
+        }
+    }
+
+    generateItems(){
+        const heatlhCount = 10;
+        const swordCount = 2;
+        
+        let generateItem = (item) =>{
+            let found;
+            let randX, randY;
+            while(!found){
+                randX = this.getRandomInt(1, this.width - 1);
+                randY = this.getRandomInt(1, this.height - 1);
+                if(this.map[randY][randX] == EMPTY){
+                    found = true
+                    break
+                }
+            }
+            this.map[randY][randX] = item;
+        }
+        
+        for (let i = 0; i < heatlhCount; i++){
+            generateItem(HEAL)
+        }
+        for (let i = 0; i < swordCount; i++){
+            generateItem(SWORD)
         }
     }
 
