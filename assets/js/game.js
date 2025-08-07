@@ -22,7 +22,8 @@ class Game {
         this.generateItems();
         this.spawnEnemies();
         this.spawnHero();
-        this.render()
+        this.render();
+        this.bindKeys();
     }
 
     render(){
@@ -267,6 +268,55 @@ class Game {
         return freeSpots[this.getRandomInt(0, freeSpots.length - 1)];
     }
 
+    bindKeys(){
+        window.addEventListener("keyup", (event)=>{
+            let dx = 0, dy = 0;
+            let moved = false;
+            switch (event.code.toLowerCase()) {
+                case 'keyw': dy = -1; moved = true; break;
+                case 'keya': dx = -1; this.hero.direction = 'left'; moved = true; break;
+                case 'keys': dy = 1; moved = true; break;
+                case 'keyd': dx = 1; this.hero.direction = 'right'; moved = true; break;
+                case 'space': this.handleAttack(); break;
+            }
+            if (moved) {
+                let newX = this.hero.x + dx;
+                let newY = this.hero.y + dy;
+                let cell = this.map[newY][newX]
+                if (newX >= 0 && newX < this.width &&
+                    newY >= 0 && newY < this.height &&
+                    (cell === EMPTY 
+                        || this.handleItemPickup(newY, newX, cell))
+                ) {
+                    this.hero.x = newX;
+                    this.hero.y = newY;
+                    this.render();
+                }
+            }
+        });
+    }
+
+    handleItemPickup(y, x, item){
+        switch (item) {
+            case HEAL:
+                if(this.hero.hp < 100){
+                    this.map[y][x] = EMPTY;
+                    this.hero.hp = 100;
+                }
+                return true
+            case SWORD:
+                this.hero.damage = 50
+                this.map[y][x] = EMPTY;
+                return true;
+            default:
+                break;
+        }
+    }
+
+    handleAttack(){
+        //todo
+    }
+
     getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
@@ -283,8 +333,8 @@ class Hero {
         this.x = x;
         this.y = y;
         this.direction = 'left';
-        this.hp = 100;
-        this.damage = 0;
+        this.hp = 50;
+        this.damage = 10;
         this.inventory = [];
 
     }
