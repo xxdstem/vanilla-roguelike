@@ -32,14 +32,16 @@ class Game {
 
     render(){
         $(".field").empty();
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                let cell = this.map[y][x];
-                let top = y * 50;
-                let left = x * 50; 
-                $(".field").append(`<div
-                    style="top: ${top}px; left: ${left}px;"
-                    class="tile ${cell}"></div>`);
+        let renderCells = ()=>{
+            for (let y = 0; y < this.height; y++) {
+                for (let x = 0; x < this.width; x++) {
+                    let cell = this.map[y][x];
+                    let top = y * 50;
+                    let left = x * 50; 
+                    $(".field").append(`<div
+                        style="top: ${top}px; left: ${left}px;"
+                        class="tile ${cell}"></div>`);
+                }
             }
         }
         let renderHero = ()=>{
@@ -64,8 +66,21 @@ class Game {
                         class="tile ${ENEMY}"><div style="width: ${hp}%" class="health"></div></div>`);
             })
         }
+        let scrollToHero = ()=>{
+            let field = $(".field");
+            let heroCenterX = this.hero.x * 50 + 25;
+            let heroCenterY = this.hero.y * 50 + 25;
+            let boxWidth = field.width();
+            let boxHeight = field.height();
+            let scrollLeft = Math.max(0, heroCenterX - boxWidth / 2);
+            let scrollTop = Math.max(0, heroCenterY - boxHeight / 2);
+            field.scrollLeft(scrollLeft);
+            field.scrollTop(scrollTop);
+        }
+        renderCells();
         renderHero();
         renderEnemies();
+        scrollToHero();
         if (this.hero.hp <= 0) {
             alert("Герой погиб!");
             this.init();
