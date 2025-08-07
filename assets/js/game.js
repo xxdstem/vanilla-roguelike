@@ -211,7 +211,7 @@ class Game {
         const swordCount = 2;
         
         let generateItem = (item) =>{
-            let [y, x] = this.getRandomFreeSpot()
+            let [y, x] = this.getRandomFreeSpot(2)
             this.map[y][x] = item;
         }
 
@@ -226,7 +226,7 @@ class Game {
     spawnEnemies(){
         const enemiesCount = 10;
         for(let e = 0; e < enemiesCount; e++){
-            let [y, x] = this.getRandomFreeSpot();
+            let [y, x] = this.getRandomFreeSpot(2);
             this.enemies.push(new Enemy(y, x))
             this.map[y][x] = ENEMY;
         }
@@ -234,22 +234,37 @@ class Game {
     }
 
     spawnHero(){
-        let [y, x] = this.getRandomFreeSpot();
+        let [y, x] = this.getRandomFreeSpot(2);
         this.hero = new Hero(y, x);
     }
 
-    getRandomFreeSpot(){
-        let found;
-        let randX, randY;
-        while(!found){
-            randX = this.getRandomInt(1, this.width - 1);
-            randY = this.getRandomInt(1, this.height - 1);
-            if(this.map[randY][randX] == EMPTY){
-                found = true
-                break
+    getRandomFreeSpot(padding = 0) {
+        let freeSpots = [];
+        for (let y = padding; y < this.height - padding; y++) {
+            for (let x = padding; x < this.width - padding; x++) {
+                let isFree = true;
+                for (let offsetY = -padding; offsetY <= padding; offsetY++) {
+                    for (let offsetX = -padding; offsetX <= padding; offsetX++) {
+                        let ny = y + offsetY;
+                        let nx = x + offsetX;
+                        if (
+                            ny < 0 || ny >= this.height ||
+                            nx < 0 || nx >= this.width ||
+                            (this.map[ny][nx] !== EMPTY && this.map[ny][nx] !== WALL)
+                        ) {
+                            isFree = false;
+                        }
+                    }
+                }
+                if (isFree && this.map[y][x] === EMPTY) {
+                    freeSpots.push([y, x]);
+                }
             }
         }
-        return [randY, randX];
+        if (freeSpots.length === 0) {
+            throw new Error("Нет свободных мест на карте");
+        }
+        return freeSpots[this.getRandomInt(0, freeSpots.length - 1)];
     }
 
     getRandomInt(min, max) {
@@ -260,7 +275,7 @@ class Enemy {
     constructor(y, x) {
         this.x = x;
         this.y = y;
-        this.hp = Math.floor(Math.random() * (100 - 10 + 1) + 10);
+        this.hp = 100;
     }
 }
 class Hero {
